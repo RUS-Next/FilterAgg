@@ -9,6 +9,6 @@ class FilterCondition:
 
 
 @dataclass
-class Agregation:
+class Aggregation:
     column: str
     operator: str
