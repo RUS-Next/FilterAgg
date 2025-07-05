@@ -17,6 +17,7 @@ def sample_csv(tmp_path):
         writer.writerow(['poco', 'xiaomi', '299', '4.4'])
     return file_path
 
+# Reading test
 def test_read_csv(sample_csv):
     processor = CSVProcessor(sample_csv)
     assert len(processor.data) == 4
@@ -25,6 +26,7 @@ def test_read_csv(sample_csv):
     assert processor.data[2]['price'] == '199'
     assert processor.data[3]['rating'] == '4.4'
 
+# Filtering tests
 def test_filter_equals(sample_csv):
     processor = CSVProcessor(sample_csv)
     condition = FilterCondition(column='brand', operator='=', value='samsung')
@@ -61,3 +63,41 @@ def test_filter_loe(sample_csv):
     assert len(filtered) == 2
     assert filtered[0]['name'] == 'redmi'
     assert filtered[1]['name'] == 'poco'
+
+# Aggregation tests
+def test_aggregation_avg(sample_csv):
+    processor = CSVProcessor(sample_csv)
+    aggregation = Aggregation(column='rating', operator='avg')
+    result = processor._apply_aggregation(processor.data, aggregation)
+    assert pytest.approx(result['avg'], 0.01) == 4.675
+
+def test_aggregation_min(sample_csv):
+    processor = CSVProcessor(sample_csv)
+    aggregation = Aggregation(column='price', operator='min')
+    result = processor._apply_aggregation(processor.data, aggregation)
+    assert result['min'] == 199
+
+def test_aggregation_max(sample_csv):
+    processor = CSVProcessor(sample_csv)
+    aggregation = Aggregation(column='price', operator='max')
+    result = processor._apply_aggregation(processor.data, aggregation)
+    assert result['max'] == 1199
+
+# Errors tests
+def test_invalid_operator(sample_csv):
+    processor = CSVProcessor(sample_csv)
+    condition = FilterCondition(column='brand', operator='sgdfgsdfg', value='samsung')
+    with pytest.raises(InvalidOperatorError):
+        processor._apply_filter(condition)
+
+def test_invalid_aggregate(sample_csv):
+    processor = CSVProcessor(sample_csv)
+    aggregation = Aggregation(column='rating', operator='invalid')
+    with pytest.raises(InvalidAggregateError):
+        processor._apply_aggregation(processor.data, aggregation)
+
+def test_invalid_column(sample_csv):
+    processor = CSVProcessor(sample_csv)
+    aggregation = Aggregation(column='invalid', operator='avg')
+    with pytest.raises(InvalidColumnError):
+        processor._apply_aggregation(processor.data, aggregation)

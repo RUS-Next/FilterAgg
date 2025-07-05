@@ -1,7 +1,8 @@
 import csv
 from typing import Dict, List, Optional, Union
 from .models import FilterCondition, Aggregation
-from .exceptions import InvalidOperatorError, InvalidAggregateError
+from .exceptions import InvalidOperatorError, InvalidAggregateError, InvalidColumnError
+
 
 class CSVProcessor:
     def __init__(self, file_path: str):
@@ -41,6 +42,31 @@ class CSVProcessor:
 
         return filtered_data
 
+    def _apply_aggregation(
+            self,
+            data: List[Dict[str, str]],
+            aggregation: Aggregation
+    ) -> Dict[str, float]:
+        if aggregation.column not in data[0].keys():
+            raise InvalidColumnError(f'Invalid column: {aggregation.column}')
+
+        try:
+            values = [float(row[aggregation.column]) for row in data]
+        except ValueError:
+            raise InvalidColumnError(f'Invalid aggregation: column {aggregation.column} has no numeric value')
+
+        operations = {
+            'avg' : lambda a: sum(a) / len(a),
+            'min' : min,
+            'max' : max,
+        }
+
+        if aggregation.operator not in operations:
+            raise InvalidAggregateError(f'Invalid operator: {aggregation.operator}')
+
+        result = operations[aggregation.operator](values)
+        return {aggregation.operator: result}
+
     def process(
             self,
             filter_condition: Optional[FilterCondition] = None,
@@ -49,7 +75,7 @@ class CSVProcessor:
         data = self.data if filter_condition is None else self._apply_filter(filter_condition)
 
         if aggregation:
-            pass
+            return self._apply_aggregation(data, aggregation)
 
         return data
 
