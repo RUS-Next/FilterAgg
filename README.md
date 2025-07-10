@@ -14,8 +14,8 @@ A lightweight Python tool for filtering and aggregating CSV data from the comman
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/csv-processor.git
-cd csv-processor
+git clone https://github.com/RUS-Next/FilterAgg
+cd FilterAgg
 ```
 2. Ensure you have Python 3.8+ installed
 
